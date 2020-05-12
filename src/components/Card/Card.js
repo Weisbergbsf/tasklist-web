@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 
 import { Draggable, Droppable } from "react-beautiful-dnd";
-import { Row, Divider } from "antd";
+import { Row, Divider, Popconfirm } from "antd";
 import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
 
 import moment from "moment";
@@ -12,7 +12,7 @@ const Card = (props) => {
   const {
     showDetails,
     openId,
-    onClick,
+    onClickDetails,
     onClickDelete,
     onClickUpdate,
     refCard,
@@ -102,7 +102,7 @@ const Card = (props) => {
                                 ? `${styles.card__title} ${styles.card__title_is_open}`
                                 : styles.card__title
                             }
-                            onClick={onClick}
+                            onClick={onClickDetails}
                           >
                             {item.title}
                           </div>
@@ -115,11 +115,16 @@ const Card = (props) => {
                         <Row>{dateStatus(item.status, item)}</Row>
                         <Divider />
                         <Row justify="end">
-                          <DeleteOutlined
-                            className={styles.buttonDelete}
+                          <Popconfirm
                             id={item.id}
-                            onClick={onClickDelete}
-                          />
+                            title="Are you sure delete this task?"
+                            onConfirm={() => onClickDelete(item.id)}
+                            okText="Yes"
+                            cancelText="No"
+                          >
+                            <DeleteOutlined className={styles.buttonDelete} />
+                          </Popconfirm>
+
                           <EditOutlined
                             className={styles.buttonUpdate}
                             id={item.id}

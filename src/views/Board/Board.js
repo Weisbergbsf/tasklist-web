@@ -30,6 +30,9 @@ const Board = (props) => {
   }, [dispatch]);
 
   const { elements } = useSelector((state) => state.tasks.tasks);
+
+  const { loading } = useSelector((state) => state.tasks);
+
   useEffect(() => {
     setColumns(columnsFromBackend(elements));
   }, [elements]);
@@ -37,6 +40,7 @@ const Board = (props) => {
   useEffect(() => {
     if (taskId && statusId) {
       dispatch(action.fetchStatusTask(taskId, statusId));
+      //setTaskId();
     }
   }, [dispatch, statusId, taskId]);
 
@@ -45,22 +49,60 @@ const Board = (props) => {
     setOpenId(event.currentTarget.id);
   };
 
-  const showHandleModal = () => {
+  const showHandleModal = (e) => {
+    clearState();
+    const taskId = Number(e.currentTarget.id);
+    if (taskId > 0) {
+      const { id, title, description, status } = elements.find(
+        (obj) => obj.id === taskId
+      );
+      setTaskId(id);
+      setTitle(title);
+      setDescription(description);
+      setStatusId(status);
+      form.setFieldsValue({
+        title: title,
+        description: description,
+      });
+    } else {
+      form.setFieldsValue({
+        title: "",
+        description: "",
+      });
+    }
     setShowModal(true);
   };
 
   const onSubmitForm = () => {
     form.submit();
-    dispatch(action.fetchNewTask({ title: title, description: description }));
+    if (taskId) {
+      dispatch(
+        action.fetchUpdateTask(taskId, {
+          title: title,
+          description: description,
+          status: statusId,
+        })
+      );
+    } else {
+      dispatch(action.fetchNewTask({ title: title, description: description }));
+    }
     setShowModal(false);
   };
 
-  const onDeleteTask = (event) => {
-    dispatch(action.fetchDeleteTask(event.currentTarget.id));
+  const onDeleteTask = (id) => {
+    dispatch(action.fetchDeleteTask(id));
   };
 
-  const handleCancelModal = (e) => {
+  const handleCancelModal = () => {
+    form.resetFields();
+    clearState();
     setShowModal(false);
+  };
+
+  const clearState = () => {
+    setTaskId();
+    setTitle("");
+    setDescription("");
   };
 
   return (
@@ -83,24 +125,27 @@ const Board = (props) => {
                   </button>
                 )}
               </div>
-              <div style={{ margin: 8 }}>
-                <Card
-                  columnId={columnId}
-                  column={column}
-                  showDetails={showDetails}
-                  openId={openId}
-                  onClick={toggleDetails}
-                  onClickDelete={onDeleteTask}
-                  //TODO: Update Task
-                  onClickUpdate={showHandleModal}
-                />
+              <div className={styles.column}>
+                {loading ? (
+                  <span>Loading...</span>
+                ) : (
+                  <Card
+                    columnId={columnId}
+                    column={column}
+                    showDetails={showDetails}
+                    openId={openId}
+                    onClickDetails={toggleDetails}
+                    onClickDelete={(e) => onDeleteTask(e)}
+                    onClickUpdate={showHandleModal}
+                  />
+                )}
               </div>
             </div>
           );
         })}
       </DragDropContext>
       <Modal
-        title="Add new Task"
+        title={taskId ? "Update Task" : "Add new Task"}
         visible={showModal}
         onOk={onSubmitForm}
         onCancel={handleCancelModal}
@@ -110,11 +155,13 @@ const Board = (props) => {
           layout="vertical"
           form={form}
           name="basic"
-          onFinish={() => {}}
-          onFinishFailed={() => {}}
           onFieldsChange={(changedFields, allFields) => {
-            setTitle(allFields[0].value);
+            setTitle(allFields[0].value || title);
             setDescription(allFields[1].value);
+          }}
+          initialValues={{
+            title: title,
+            description: description,
           }}
         >
           <Form.Item

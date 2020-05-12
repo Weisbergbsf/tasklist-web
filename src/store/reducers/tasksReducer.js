@@ -19,6 +19,7 @@ export default function (state = initialState, action) {
       return {
         ...state,
         tasks: action.payload,
+        loading: false,
       };
     case type.FETCH_NEW_TASK_SUCCSESS:
       return {
@@ -27,6 +28,7 @@ export default function (state = initialState, action) {
           ...state.tasks,
           elements: state.tasks.elements.concat(action.payload),
         },
+        loading: false,
       };
     case type.FETCH_DELETE_TASK_SUCCSESS:
       return {
@@ -34,14 +36,29 @@ export default function (state = initialState, action) {
         tasks: {
           ...state.tasks,
           elements: state.tasks.elements.filter(
-            (task) => task.id.toString() !== action.payload
+            (task) => task.id !== action.payload
           ),
         },
+        loading: false,
       };
 
     case type.FETCH_STATUS_TASK_SUCCSESS:
-      const taskIndex = state.tasks.elements.findIndex(
+      const statusTaskIndex = state.tasks.elements.findIndex(
         (task) => task.id.toString() === action.id
+      );
+      let tasksUpdateStatus = [...state.tasks.elements];
+      tasksUpdateStatus[statusTaskIndex] = action.payload;
+      return {
+        ...state,
+        tasks: {
+          ...state.tasks,
+          elements: tasksUpdateStatus,
+        },
+        loading: false,
+      };
+    case type.FETCH_TASK_UPDATE_SUCCSESS:
+      const taskIndex = state.tasks.elements.findIndex(
+        (task) => task.id === action.id
       );
       let tasksUpdated = [...state.tasks.elements];
       tasksUpdated[taskIndex] = action.payload;
@@ -51,6 +68,7 @@ export default function (state = initialState, action) {
           ...state.tasks,
           elements: tasksUpdated,
         },
+        loading: false,
       };
 
     case type.FETCH_TASK_FAIL:
